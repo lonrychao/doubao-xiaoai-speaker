@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>豆包接入小爱音箱 · 连续对话免重复唤醒</title>
+<meta name="description" content="把小爱音箱（小米智能音箱）接入豆包大模型（火山方舟），实现连续对话、免重复唤醒。基于 MiGPT，不拆机、不刷机、免费。">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #3b82f6;
+    --accent-2: #60a5fa;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+  .hero { text-align: center; padding: 32px 0 40px; }
+  .badge {
+    display: inline-block; font-size: 13px; color: var(--accent-2);
+    border: 1px solid var(--accent); border-radius: 20px; padding: 4px 14px; margin-bottom: 20px;
+    background: rgba(59, 130, 246, 0.08);
+  }
+  h1 { font-size: 40px; letter-spacing: -0.5px; margin-bottom: 14px; }
+  .sub { font-size: 18px; color: var(--text-dim); margin-bottom: 28px; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 11px 22px; border-radius: 8px; text-decoration: none;
+    font-size: 15px; font-weight: 600; transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-2); }
+  .btn-ghost { border: 1px solid var(--border); color: var(--text); background: var(--bg-soft); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent-2); }
+  section { margin-top: 44px; }
+  h2 { font-size: 22px; margin-bottom: 16px; padding-left: 12px; border-left: 3px solid var(--accent); }
+  p { color: var(--text-dim); margin-bottom: 12px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; }
+  .card {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+  }
+  .card .icon { font-size: 24px; margin-bottom: 8px; }
+  .card h3 { font-size: 15px; margin-bottom: 6px; }
+  .card p { font-size: 13px; margin: 0; }
+  .truth {
+    background: var(--bg-soft); border: 1px solid var(--border); border-left: 3px solid var(--amber);
+    border-radius: 10px; padding: 20px 22px;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 500; }
+  td:first-child { color: var(--text); white-space: nowrap; }
+  code {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 5px;
+    padding: 2px 6px; font-size: 13px; font-family: ui-monospace, "SF Mono", Consolas, monospace; color: var(--accent-2);
+  }
+  pre {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; overflow-x: auto; margin: 14px 0;
+  }
+  pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 13px; line-height: 1.6; }
+  .steps { counter-reset: step; margin-top: 16px; }
+  .step {
+    position: relative; padding: 0 0 20px 52px; counter-increment: step;
+  }
+  .step::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
+  }
+  .step::after {
+    content: ""; position: absolute; left: 16px; top: 34px; bottom: 4px; width: 2px; background: var(--border);
+  }
+  .step:last-child::after { display: none; }
+  .step h3 { font-size: 16px; margin-bottom: 6px; }
+  .step p { font-size: 14px; }
+  .footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; color: var(--text-dim); font-size: 13px; }
+  .footer a { color: var(--accent-2); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  .tag { color: var(--green); }
+  @media (max-width: 600px) {
+    h1 { font-size: 30px; }
+    .sub { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="badge">开源 · 不拆机 · 不刷机 · 免费</span>
+    <h1>豆包接入小爱音箱</h1>
+    <p class="sub">把小爱音箱（小米智能音箱）接入豆包大模型，实现<b style="color:var(--text)">连续对话、免重复唤醒</b></p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/lonrychao/doubao-xiaoai-speaker">查看仓库 →</a>
+      <a class="btn btn-ghost" href="#start">开始配置</a>
+    </div>
+  </div>
+
+  <section>
+    <h2>它能做什么</h2>
+    <div class="cards">
+      <div class="card"><div class="icon">🎓</div><h3>AI 问答</h3><p>小爱音箱从「人工智障」秒变豆包学霸，上知天文下知地理。</p></div>
+      <div class="card"><div class="icon">💬</div><h3>连续对话</h3><p>喊一次进入，之后连续多轮提问都<b>不用再喊「小爱同学」</b>。</p></div>
+      <div class="card"><div class="icon">🔊</div><h3>流式响应</h3><p>豆包的回答边生成边播报，不用干等。</p></div>
+      <div class="card"><div class="icon">🎭</div><h3>自定义人设</h3><p>改一下配置即可调教豆包的性格。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>先说清「免唤醒」的真相</h2>
+    <div class="truth">
+      <p style="color:var(--text)">小米音箱靠<b>本地唤醒词</b>触发收音，这是硬件机制，任何方案都无法做到「永不喊唤醒词」。</p>
+      <p style="margin-bottom:0">本方案实现的是「<b class="tag">喊一次，连续聊</b>」：</p>
+      <table>
+        <tr><th>场景</th><th>你要做的</th></tr>
+        <tr><td>进入连续对话</td><td>说一次「小爱同学，<b>召唤豆包</b>」</td></tr>
+        <tr><td>进入后连续提问</td><td><b>直接说话，不用再喊「小爱同学」</b></td></tr>
+        <tr><td>结束对话</td><td>说「退出豆包」，或停止说话 60 秒自动退出</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="start">
+    <h2>三步配置</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>获取豆包密钥</h3>
+        <p>打开<a href="https://console.volcengine.com/ark" style="color:var(--accent-2)">火山方舟</a> → 创建 API Key 和推理接入点（模型选 <code>doubao-seed-1.6-flash</code>）。</p>
+      </div>
+      <div class="step">
+        <h3>填写配置</h3>
+        <p>复制 <code>assets/</code> 下的模板，替换占位符：<code>.env</code> 填豆包密钥，<code>.migpt.js</code> 填小米账号和音箱名称。</p>
+      </div>
+      <div class="step">
+        <h3>一键启动</h3>
+        <p>Windows 双击 <code>start-windows.bat</code>，Mac/Linux 运行 <code>start-linux.sh</code>，或用 Docker：</p>
+        <pre><code>docker run -d --name mi-gpt \
+  --env-file $(pwd)/.env \
+  -v $(pwd)/.migpt.js:/app/.migpt.js \
+  --restart unless-stopped \
+  idootop/mi-gpt:latest</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>前提条件</h2>
+    <table>
+      <tr><th>条件</th><th>说明</th></tr>
+      <tr><td>长期开机的设备</td><td>Windows / Mac / Linux / NAS / 树莓派，装好 Docker</td></tr>
+      <tr><td>小米账号</td><td>纯数字小米ID + 密码，且<b>关闭两步验证</b></td></tr>
+      <tr><td>豆包 API Key</td><td>火山方舟创建（单个字符串）+ 接入点 ID</td></tr>
+    </table>
+  </section>
+
+  <div class="footer">
+    <p>基于 <a href="https://github.com/idootop/mi-gpt">MiGPT</a> · 完整文档与配置模板见 <a href="https://github.com/lonrychao/doubao-xiaoai-speaker">GitHub 仓库</a></p>
+    <p style="margin-top:8px">本页不包含任何账号信息 · 请勿在公开仓库提交 .env 或含密码的 .migpt.js</p>
+  </div>
+</div>
+</body>
+</html>
