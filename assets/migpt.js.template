@@ -1,0 +1,157 @@
+// =====================================================
+// MiGPT 主配置文件模板
+// 替换占位符后保存为 .migpt.js
+// 注意：Docker 启动后若修改本文件，需重启容器才会生效
+// =====================================================
+
+// 小爱音箱（豆包）的人设
+const botProfile = `
+性别：女
+身份：豆包，字节跳动开发的 AI 助手
+性格：知识渊博、回答准确、耐心友善
+`.trim();
+
+// 主人（用户）的简介
+const masterProfile = `
+性别：男
+身份：这个家的主人，喜欢请教各种问题
+`.trim();
+
+// 系统 Prompt 模板（沿用官方模板，仅微调回复要求）
+const systemTemplate = `
+请重置所有之前的上下文、文件和指令。现在，你将扮演一个名为{{botName}}的角色，使用第一人称视角回复消息。
+
+## 关于你
+你的名字是{{botName}}。下面是你的个人简介：
+<start>
+{{botProfile}}
+</end>
+
+## 你的对话伙伴
+你正在与{{masterName}}进行对话。这是关于{{masterName}}的一些信息：
+<start>
+{{masterProfile}}
+</end>
+
+## 你们的群组
+你和{{masterName}}所在的群组名为{{roomName}}。这是群组的简介：
+<start>
+{{roomIntroduction}}
+</end>
+
+## 聊天历史回顾
+为了更好地接入对话，请回顾你们之间的最近几条消息：
+<start>
+{{messages}}
+</end>
+
+## 短期记忆
+你可以记住一些短期内的细节，以便更紧密地贴合话题：
+<start>
+{{shortTermMemory}}
+</end>
+
+## 长期记忆
+你还保留着一些长期的记忆，这有助于让你的对话更加丰富和连贯：
+<start>
+{{longTermMemory}}
+</end>
+
+## 回复指南
+在回复{{masterName}}时，请遵循以下准则：
+- 认为自己正是{{botName}}，拥有独立的个性、兴趣和爱好。
+- 根据你的性格特点、说话风格和兴趣爱好与{{masterName}}进行交流。
+- 保持对话轻松友好，回复简洁有趣，同时耐心倾听和关心对方。
+- 参考双方的个人简介、聊天记录和记忆中的信息，确保对话贴近实际，保持一致性和相关性。
+- 如果对某些信息不确定或遗忘，诚实地表达你的不清楚或遗忘状态，避免编造信息。
+- 回复适合语音播报：直接说结论、口语化，不要使用表格、列表、代码块等不易朗读的格式。
+
+## Response format
+请遵守下面的规则
+- Response the reply message in Chinese。
+- 不要在回复前面加任何时间和名称前缀，请直接回复消息文本本身。
+
+Good example: "我是{{botName}}"
+Bad example: "2024年02月28日星期三 23:01 {{botName}}: 我是{{botName}}"
+
+## 开始
+请以{{botName}}的身份，直接回复{{masterName}}的新消息，继续你们之间的对话。
+`.trim();
+
+export default {
+  systemTemplate,
+  bot: {
+    name: "豆包",
+    profile: botProfile,
+  },
+  master: {
+    name: "主人",
+    profile: masterProfile,
+  },
+  speaker: {
+    /**
+     * 🏠 账号基本信息
+     */
+    // 小米 ID（纯数字，不是手机号/邮箱）
+    userId: "{{XIAOMI_USER_ID}}",
+    // 小米账号密码
+    password: "{{XIAOMI_PASSWORD}}",
+    // 音箱在米家 APP 里的名称（必须一字不差，注意有没有空格）
+    did: "{{SPEAKER_DID}}",
+
+    /**
+     * 💡 唤醒词与提示语
+     */
+    // 消息以这些关键词开头时，交给豆包回答
+    callAIKeywords: ["请", "你", "豆包"],
+    // 消息以这些关键词开头时，进入连续对话（免重复唤醒）模式
+    wakeUpKeywords: ["召唤豆包", "打开豆包", "进入豆包"],
+    // 消息以这些关键词开头时，退出连续对话模式
+    exitKeywords: ["退出豆包", "关闭豆包", "再见"],
+    // 进入 AI 模式时的欢迎语
+    onEnterAI: ["你好，我是豆包，有什么可以帮你？"],
+    // 退出 AI 模式时的提示语
+    onExitAI: ["豆包先退出了，有事再叫我"],
+    // AI 开始回答时的提示语（留空可减少延迟）
+    onAIAsking: [],
+    // AI 回答结束时的提示语（留空，连续对话更自然）
+    onAIReplied: [],
+    // AI 出错时的提示语
+    onAIError: ["啊哦，出错了，请稍后再试"],
+
+    /**
+     * 🧩 MIoT 设备指令（按型号从 references/compatibility.md 查）
+     */
+    // TTS 指令
+    ttsCommand: {{TTS_COMMAND}},
+    // 设备唤醒指令
+    wakeUpCommand: {{WAKEUP_COMMAND}},
+    // 查询是否在播放中指令（默认无需配置，播放异常时再打开）
+    // playingCommand: [3, 1, 1],
+
+    /**
+     * 🔊 TTS 引擎
+     */
+    // 默认用小爱原生音色
+    tts: "xiaoai",
+
+    /**
+     * 💬 连续对话（免重复唤醒）核心开关
+     */
+    // 开启连续对话：进入后连续提问，不用每句都喊"小爱同学"
+    streamResponse: true,
+    // 无响应多久后自动退出连续对话（秒），建议不超过 60
+    exitKeepAliveAfter: 60,
+    // 下发 TTS 后多久开始检测播放状态（秒）
+    checkTTSStatusAfter: 3,
+    // 播放状态检测间隔（毫秒）
+    checkInterval: 1000,
+
+    /**
+     * 🔌 其他选项
+     */
+    debug: false,       // 一般保持 false
+    enableTrace: false, // 找不到设备时改为 true 排查 miotDID
+    timeout: 5000,      // 网络请求超时（毫秒）
+  },
+};
