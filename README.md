@@ -26,6 +26,19 @@
 
 ## 🚀 快速开始
 
+```mermaid
+flowchart TD
+    A["准备 6 项资料<br/>小米ID · 密码 · 音箱名<br/>豆包 API Key · 接入点ID"] --> B["获取豆包密钥<br/>火山方舟创建 Key + 接入点"]
+    B --> C["填写配置<br/>.env + .migpt.js"]
+    C --> D["Docker 一键启动<br/>start-windows.bat / start-linux.sh"]
+    D --> E{"日志显示<br/>启动成功？"}
+    E -- "否" --> F["对照排查表<br/>70016 / 异地风控 / 找不到设备"]
+    F --> C
+    E -- "是" --> G["说「小爱同学，召唤豆包」"]
+    G --> H["进入连续对话<br/>免重复唤醒"]
+    H --> I["连续多轮提问<br/>直到说「退出豆包」"]
+```
+
 ### 前置条件
 
 1. 一台**长期开机**的设备（Windows / Mac / Linux / NAS / 树莓派 / 云服务器），装好 [Docker](https://www.docker.com/products/docker-desktop/)；
